@@ -1,11 +1,40 @@
 extends KinematicBody2D
 
-export var speed := 500
+export var speed = 400
 export var friction = 0.18
+export var projectile_speed = 500
+export var fire_rate = 0.2
+export var recoil_range_deg = 5
+export var projectiles_per_fire = 1
+
 
 var _velocity := Vector2.ZERO
 
 onready var animated_sprite: AnimatedSprite = $AnimatedSprite
+onready var gun:= $Gun
+
+var projectile = preload("res://Projectile.tscn")
+var can_fire = true
+
+func _process(_delta):
+	gun.look_at(get_global_mouse_position())
+	if Input.is_action_pressed("fire") and can_fire:
+		for _i in range(projectiles_per_fire):
+			fire()
+
+func fire():
+	$AnimationPlayer.play("shoot")
+	var projectile_instance = projectile.instance()
+	projectile_instance.position = $Gun/ProjectilePoint.get_global_position()
+	var random_recoil_deg = rand_range(-recoil_range_deg, recoil_range_deg)
+	var random_recoil_rad = deg2rad(random_recoil_deg)
+	projectile_instance.rotation_degrees = gun.rotation_degrees + random_recoil_deg
+	var projectile_impulse = Vector2(projectile_speed, 0).rotated(gun.rotation + random_recoil_rad)
+	projectile_instance.apply_impulse(Vector2(), projectile_impulse)
+	get_tree().get_root().add_child(projectile_instance)
+	can_fire = false
+	yield(get_tree().create_timer(fire_rate),'timeout')
+	can_fire = true
 
 func _physics_process(_delta):
 	var direction := Vector2(
