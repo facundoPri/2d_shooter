@@ -1,14 +1,16 @@
 extends KinematicBody2D
 
+signal die
+
 export var speed = 400
 export var friction = 0.18
 export var projectile_speed = 500
-export var fire_rate = 0.2
-export var recoil_range_deg = 5
-export var projectiles_per_fire = 1
-
+export var fire_rate = 0.3
+export var recoil_range_deg = 20
+export var projectiles_per_fire = 10
 
 var _velocity := Vector2.ZERO
+var shotgun_mode = true
 
 onready var animated_sprite: AnimatedSprite = $AnimatedSprite
 onready var gun:= $Gun
@@ -60,3 +62,21 @@ func _unhandled_input(event):
 		animated_sprite.flip_h = false
 	elif event.is_action_pressed("left"):
 		animated_sprite.flip_h = true
+	if event.is_action_released("change_gun"):
+		print('test')
+		shotgun_mode = not shotgun_mode
+		if shotgun_mode:
+			fire_rate = 0.3
+			projectiles_per_fire = 10
+			recoil_range_deg = 20
+			projectile_speed = 500
+		else:
+			fire_rate = 0
+			projectiles_per_fire = 1
+			recoil_range_deg = 3
+			projectile_speed = 400
+
+
+func _on_Area2D_body_entered(body):
+	emit_signal("die")
+	queue_free()
